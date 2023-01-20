@@ -1,7 +1,7 @@
 #include <unistd.h>
 
 struct memory_block_list {
-  int len;
+  size_t len;
   struct memory_block_list *next;
   struct memory_block_list *prev;
 };

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "my_malloc.h"
+#include <assert.h>
 
 #ifdef FF
 #define MALLOC(sz) ff_malloc(sz)
@@ -24,7 +25,7 @@ int main(int argc, char *argv[])
   size = 4;
   expected_sum += size * size;
   array[0] = (int *)MALLOC(size * sizeof(int));
-  
+  assert(array[0] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[0][i] = size;
   } //for i
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
   expected_sum += size * size;
   
   array[1] = (int *)MALLOC(size * sizeof(int));
+   assert(array[1] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[1][i] = size;
   } //for i
@@ -47,6 +49,7 @@ int main(int argc, char *argv[])
   size = 8;
   expected_sum += size * size;
   array[2] = (int *)MALLOC(size * sizeof(int));
+ assert(array[2] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[2][i] = size;
   } //for i
@@ -57,6 +60,7 @@ int main(int argc, char *argv[])
   size = 32;
   expected_sum += size * size;
   array[3] = (int *)MALLOC(size * sizeof(int));
+   assert(array[3] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[3][i] = size;
   } //for i
@@ -70,6 +74,7 @@ int main(int argc, char *argv[])
   size = 7;
   expected_sum += size * size;
   array[4] = (int *)MALLOC(size * sizeof(int));
+   assert(array[4] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[4][i] = size;
   } //for i
@@ -80,6 +85,7 @@ int main(int argc, char *argv[])
   size = 256;
   expected_sum += size * size;
   array[5] = (int *)MALLOC(size * sizeof(int));
+   assert(array[5] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[5][i] = size;
   } //for i
@@ -94,6 +100,7 @@ int main(int argc, char *argv[])
   size = 23;
   expected_sum += size * size;
   array[6] = (int *)MALLOC(size * sizeof(int));
+   assert(array[6] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[6][i] = size;
   } //for i
@@ -104,6 +111,7 @@ int main(int argc, char *argv[])
   size = 4;
   expected_sum += size * size;
   array[7] = (int *)MALLOC(size * sizeof(int));
+   assert(array[7] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[7][i] = size;
   } //for i
@@ -116,6 +124,7 @@ int main(int argc, char *argv[])
   size = 10;
   expected_sum += size * size;
   array[8] = (int *)MALLOC(size * sizeof(int));
+ assert(array[8] + size <=  (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[8][i] = size;
   } //for i
@@ -126,6 +135,7 @@ int main(int argc, char *argv[])
   size = 32;
   expected_sum += size * size;
   array[9] = (int *)MALLOC(size * sizeof(int));
+  assert(array[9] + size <= (int *)sbrk(0));
   for (i=0; i < size; i++) {
     array[9][i] = size;
   } //for i
