@@ -21,7 +21,7 @@ void *allocateFromFreeSpace(mem_block_list *curr){
 	mem_block_list *next = curr->next;
 
 	if(prev == NULL){ //1st element
-	  head = next;
+	  free_head = next;
 	} else {
 	  prev->next = next;
 	}
@@ -38,23 +38,23 @@ void *allocateFromFreeSpace(mem_block_list *curr){
 
 void *ff_malloc(size_t size){
   
-    mem_block_list *curr = head;
+    mem_block_list *curr = free_head;
     
     while(curr != NULL){
       if(size <= curr->len){
 	size_t extra_space = curr->len - size;
 
-	/**
+	
 	//Trying to Optimize by allocating exactly what user requested.
 		
 	if(extra_space > sizeof(mem_block_list)){
-	  mem_block_list *metadata = createNewMetaDataNode(curr + sizeof(mem_block_list) + size, extra_space - sizeof(mem_block_list));
+	  mem_block_list *metadata = createNewMetaDataNode((void *)curr + sizeof(mem_block_list) + size, extra_space - sizeof(mem_block_list));
 	  metadata->prev = curr;
 	  metadata->next = curr->next;
 	  curr->next = metadata;
 	  curr->len = size;
 	}
-	**/
+	
 	return allocateFromFreeSpace(curr);
       }
       else{
@@ -68,19 +68,19 @@ void *ff_malloc(size_t size){
 void addNewNode(void *ptr){
   mem_block_list *metadata = (mem_block_list *)(ptr - sizeof(mem_block_list));
   
-  if(head == NULL) { //Adding first element in the list
-    head = metadata;
+  if(free_head == NULL) { //Adding first element in the list
+    free_head = metadata;
     return;
   }
   
-  if(head > metadata){ //Adding to the front (i.e. Head)
-    metadata->next = head;
-    head->prev = metadata;
-    head = metadata;
+  if(free_head > metadata){ //Adding to the front (i.e. Head)
+    metadata->next = free_head;
+    free_head->prev = metadata;
+    free_head = metadata;
     return; 
   }
   
-  mem_block_list *curr = head;
+  mem_block_list *curr = free_head;
   while(curr->next != NULL && curr->next < metadata){
     curr = curr->next;
   }
@@ -94,9 +94,9 @@ void addNewNode(void *ptr){
 }
 
 void coalesce(){ 
-  mem_block_list *curr = head;
+  mem_block_list *curr = free_head;
   while(curr != NULL){
-    if((curr->next != NULL) && (curr + curr->len + sizeof(mem_block_list) == curr->next)){
+    if((curr->next != NULL) && ((void *)curr + curr->len + sizeof(mem_block_list) == curr->next)){
 	curr->len = curr->len + curr->next->len + sizeof(mem_block_list); //Also adding space of mem_block_list 
 	curr->next = curr->next->next;
     } else{
@@ -108,4 +108,22 @@ void coalesce(){
 void ff_free(void * ptr){
   addNewNode(ptr);
   coalesce();
+}
+
+unsigned long get_data_segment_size(){  
+  return 8L;
+}
+
+
+unsigned long get_data_segment_free_space_size(){
+  unsigned long size =0;
+
+  mem_block_list *curr = free_head;
+
+  while(curr != NULL){
+    size = size + sizeof(mem_block_list) + curr->len;
+    curr = curr->next;
+  }
+
+  return size;
 }

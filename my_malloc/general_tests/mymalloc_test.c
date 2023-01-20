@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
   } //for i
   
   FREE(array[0]);
+  FREE(array[1]);
   FREE(array[2]);
 
   size = 7;
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
   } //for i
 
   FREE(array[5]);
-  FREE(array[1]);
+  //FREE(array[1]);
   FREE(array[3]);
 
   size = 23;
