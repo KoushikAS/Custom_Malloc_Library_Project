@@ -1,7 +1,6 @@
 #include <unistd.h>
 
 struct memory_block_list {
-  void *addr;
   int len;
   struct memory_block_list *next;
   struct memory_block_list *prev;
