@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   
   FREE(array[0]);
   FREE(array[2]);
-/**
+
   size = 7;
   expected_sum += size * size;
   array[4] = (int *)MALLOC(size * sizeof(int));
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
   FREE(array[7]);
   FREE(array[8]);
   FREE(array[9]);
-  **/
+  
   if (sum == expected_sum) {
     printf("Calculated expected value of %d\n", sum);
     printf("Test passed\n");

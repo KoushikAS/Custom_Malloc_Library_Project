@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void *ff_malloc(size_t size){
-  if(head == NULL){ //Base Condition
+
+void *expandHeap(size_t size){
      void *allocated_mem = sbrk(sizeof(mem_block_list) + size);
      mem_block_list *metadata = (mem_block_list *)allocated_mem;
      metadata->len = size;
@@ -11,11 +11,43 @@ void *ff_malloc(size_t size){
      metadata->prev = NULL;
     
      return allocated_mem + sizeof(mem_block_list);
-  } else{
+}
 
-    
-  }
-  return NULL;
+void *allocateFromFreeSpace(mem_block_list *curr, size_t size){
+	mem_block_list *prev = curr->prev;
+	mem_block_list *next = curr->next;
+
+	if(prev == NULL){ //1st element
+	  head = next;
+	} else {
+	  prev->next = next;
+	}
+
+	if(next != NULL){
+	  next->prev = prev;
+	}
+
+	curr->next = NULL;
+	curr->prev = NULL;
+	  
+	return curr + sizeof(mem_block_list);  
+}
+
+
+void *ff_malloc(size_t size){
+  
+    mem_block_list *curr = head;
+
+    while(curr != NULL){
+      if(size <= curr->len){
+	return allocateFromFreeSpace(curr, size);
+      }
+      else{
+	curr = curr->next;
+      }
+    }
+
+    return expandHeap(size);
 }
 
 void addNewNode(void *ptr){
