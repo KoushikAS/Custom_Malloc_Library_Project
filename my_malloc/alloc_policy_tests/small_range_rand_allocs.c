@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "my_malloc.h"
-
+#include <assert.h>
 #define NUM_ITERS    100
 #define NUM_ITEMS    10000
 
@@ -69,7 +69,17 @@ int main(int argc, char *argv[])
 
 
   for (i=0; i < NUM_ITEMS; i++) {
+    printf("Outside loop I= %d\n",i);
     malloc_items[0][i].address = (int *)MALLOC(malloc_items[0][i].bytes);
+
+    mem_block_list *curr = alloc_head;
+    while(curr != NULL){
+
+      if(curr->next != NULL){
+	assert(curr->next != curr);
+      }
+      curr = curr->next;
+    }
   } //for i
 
 
@@ -80,11 +90,48 @@ int main(int argc, char *argv[])
     unsigned malloc_set = i % 2;
     for (j=0; j < NUM_ITEMS; j+=50) {
       for (k=0; k < 50; k++) {
+	
+	printf("1st Loop I= %d J= %d K= %d\n",i,j,k);
 	unsigned item_to_free = free_list[j+k];
 	FREE(malloc_items[malloc_set][item_to_free].address);
+
+
+	if(free_head != NULL && free_head->next != NULL){
+	  assert(free_head->next->prev == free_head);
+
+	}
+	
+	    mem_block_list *curr_free = free_head;
+    while(curr_free != NULL){
+
+      if(curr_free->next != NULL && curr_free->next->next != NULL){
+	assert(curr_free->next == curr_free->next->next->prev);
+      }
+      curr_free = curr_free->next;
+    }
+
+    
+	mem_block_list *curr = alloc_head;
+    while(curr != NULL){
+
+      if(curr->next != NULL){
+	assert(curr->next != curr);
+      }
+      curr = curr->next;
+    }
       } //for k
       for (k=0; k < 50; k++) {
+	printf("2nd Loop I= %d J= %d K= %d\n",i,j,k);
 	malloc_items[1-malloc_set][j+k].address = (int *)MALLOC(malloc_items[1-malloc_set][j+k].bytes);
+
+	    mem_block_list *curr = alloc_head;
+    while(curr != NULL){
+
+      if(curr->next != NULL){
+	assert(curr->next != curr);
+      }
+      curr = curr->next;
+    }
       } //for k
     } //for j
   } //for i
