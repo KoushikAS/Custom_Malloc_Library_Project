@@ -9,7 +9,7 @@ struct memory_block_list {
 typedef struct memory_block_list mem_block_list; 
 
 extern mem_block_list *free_head = NULL;
-extern mem_block_list *alloc_head = NULL;
+extern unsigned long heap_size =0;
 
 void *ff_malloc(size_t size);
 void ff_free(void * ptr);
