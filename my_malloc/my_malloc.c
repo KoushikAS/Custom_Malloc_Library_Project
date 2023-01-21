@@ -1,8 +1,6 @@
 #include "my_malloc.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include<assert.h>
-#include<stdbool.h>
 
 mem_block_list *createNewMetaDataNode(void * mem, size_t size){
      mem_block_list *metadata = (mem_block_list *)mem;
@@ -42,15 +40,7 @@ void addMetadataToList(mem_block_list **head,  mem_block_list **metadata){
 void *expandHeap(size_t size){
      void *allocated_mem = sbrk(sizeof(mem_block_list) + size);
      mem_block_list *metadata = createNewMetaDataNode(allocated_mem, size);
-     addMetadataToList(&alloc_head, &metadata);
-
-     	 /**testing**/
-	mem_block_list *curr_test = free_head;
-	while(curr_test != NULL){
-	  	  assert(curr_test != metadata);
-	  curr_test = curr_test->next;
-	}
-     
+     addMetadataToList(&alloc_head, &metadata);     
      return (void *)allocated_mem + sizeof(mem_block_list);
 }
 
@@ -69,19 +59,11 @@ void *allocateFromFreeSpace(mem_block_list *curr){
 	  next_free->prev = prev_free;
 	}
 
-	//Allocating the new memory
-	
+	//Allocating the new memory	
 	curr->next = NULL;
 	curr->prev = NULL;
 
 	addMetadataToList(&alloc_head, &curr);
-
-	 /**testing**/
-	mem_block_list *curr_test = free_head;
-	while(curr_test){
-	  assert(curr_test != curr);
-	  curr_test = curr_test->next;
-	}
 	  
 	return (void *)curr + sizeof(mem_block_list);  
 }
@@ -157,13 +139,6 @@ void ff_free(void * ptr){
   
   addMetadataToList(&free_head, &metadata);
   coalesce();
-
-  /**testing**/
-  mem_block_list *curr = alloc_head;
-  while(curr){
-    assert(curr != metadata);
-    curr = curr->next;
-  }
 }
 
 unsigned long get_segment_size(mem_block_list *head){

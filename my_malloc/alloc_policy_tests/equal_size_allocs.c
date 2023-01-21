@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
     for (j=NUM_ITEMS-1000; j < NUM_ITEMS; j++) {
       FREE(array[j]);
     } //for j
+    printf("I=%d\n",i);
   } //for i
 
   //Stop Time
