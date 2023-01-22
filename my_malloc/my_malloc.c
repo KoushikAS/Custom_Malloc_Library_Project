@@ -1,5 +1,6 @@
 #include "my_malloc.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -67,27 +68,30 @@ void * allocateFromFreeSpace(mem_block_list * curr) {
   return (void *)curr + sizeof(mem_block_list);
 }
 
+void split_extra_space(mem_block_list * curr, size_t size) {
+  size_t extra_space = curr->len - size;
+
+  // Trying to Optimize by allocating exactly what user requested.
+  if (extra_space > sizeof(mem_block_list)) {
+    mem_block_list * metadata =
+        createNewMetaDataNode((void *)curr + sizeof(mem_block_list) + size,
+                              extra_space - sizeof(mem_block_list));
+    metadata->prev = curr;
+    metadata->next = curr->next;
+    if (curr->next != NULL) {
+      curr->next->prev = metadata;
+    }
+    curr->next = metadata;
+    curr->len = size;
+  }
+}
+
 void * ff_malloc(size_t size) {
   mem_block_list * curr = free_head;
 
   while (curr != NULL) {
     if (size <= curr->len) {
-      size_t extra_space = curr->len - size;
-
-      // Trying to Optimize by allocating exactly what user requested.
-      if (extra_space > sizeof(mem_block_list)) {
-        mem_block_list * metadata =
-            createNewMetaDataNode((void *)curr + sizeof(mem_block_list) + size,
-                                  extra_space - sizeof(mem_block_list));
-        metadata->prev = curr;
-        metadata->next = curr->next;
-        if (curr->next != NULL) {
-          curr->next->prev = metadata;
-        }
-        curr->next = metadata;
-        curr->len = size;
-      }
-
+      split_extra_space(curr, size);
       return allocateFromFreeSpace(curr);
     }
     else {
@@ -96,6 +100,35 @@ void * ff_malloc(size_t size) {
   }
 
   return expandHeap(size);
+}
+
+void * bf_malloc(size_t size) {
+  mem_block_list * curr = free_head;
+  mem_block_list * bst_fit = NULL;
+  size_t bst_fit_size = UINT_MAX;
+
+  while (curr != NULL) {
+    if (size <= curr->len) {
+      size_t extra_space = curr->len - size;
+      if (extra_space < bst_fit_size) {
+        bst_fit = curr;
+        bst_fit_size = extra_space;
+        if (extra_space == 0) {  //Found the Best fit in the list no need to go further
+          break;
+        }
+      }
+    }
+
+    curr = curr->next;
+  }
+
+  if (bst_fit != NULL) {
+    split_extra_space(bst_fit, size);
+    return allocateFromFreeSpace(bst_fit);
+  }
+  else {
+    return expandHeap(size);
+  }
 }
 
 void coalesce(mem_block_list * curr) {
@@ -118,7 +151,7 @@ void coalesce(mem_block_list * curr) {
   }
 }
 
-void ff_free(void * ptr) {
+void mem_free(void * ptr) {
   mem_block_list * metadata = (mem_block_list *)(ptr - sizeof(mem_block_list));
   addMetadataToList(&free_head, &metadata);
 
@@ -129,6 +162,14 @@ void ff_free(void * ptr) {
 
   //Trying to Coalesce next terms
   coalesce(metadata);
+}
+
+void ff_free(void * ptr) {
+  mem_free(ptr);
+}
+
+void bf_free(void * ptr) {
+  mem_free(ptr);
 }
 
 unsigned long get_data_segment_size() {
