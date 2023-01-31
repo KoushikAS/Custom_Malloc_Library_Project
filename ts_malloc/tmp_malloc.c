@@ -8,37 +8,28 @@ mem_block_list * createNewMetaDataNode(void * mem, size_t size) {
   return metadata;
 }
 
-void addMetadataToList(mem_block_list ** head, mem_block_list ** metadata) {
-  if (*head == NULL) {  // Adding first element in the list
-    *head = *metadata;
-    return;
-  }
+// Read lock is required
+mem_block_list * search_list(size_t size) {
+  mem_block_list * curr = free_head;
+  mem_block_list * bst_fit = NULL;
+  size_t bst_fit_size = UINT_MAX;
 
-  if (*head > *metadata) {  // Adding to the front (i.e. Head)
-    (*metadata)->next = *head;
-    (*head)->prev = *metadata;
-    *head = *metadata;
-    return;
-  }
+  while (curr != NULL) {
+    if (size <= curr->len) {
+      size_t extra_space = curr->len - size;
+      if (extra_space < bst_fit_size) {
+        bst_fit = curr;
+        bst_fit_size = extra_space;
+        if (extra_space == 0) {  //Found the Best fit in the list no need to go further
+          break;
+        }
+      }
+    }
 
-  mem_block_list * curr = *head;
-  while (curr->next != NULL && curr->next < *metadata) {
     curr = curr->next;
   }
 
-  (*metadata)->next = curr->next;
-  (*metadata)->prev = curr;
-  if (curr->next != NULL) {  // To check if it is not the end of list.
-    curr->next->prev = *metadata;
-  }
-  curr->next = *metadata;
-}
-
-void * expandHeap(size_t size) {
-  void * allocated_mem = sbrk(sizeof(mem_block_list) + size);
-  mem_block_list * metadata = createNewMetaDataNode(allocated_mem, size);
-
-  return (void *)allocated_mem + sizeof(mem_block_list);
+  return bst_fit;
 }
 
 void * allocateFromFreeSpace(mem_block_list * curr) {
@@ -82,35 +73,69 @@ void split_extra_space(mem_block_list * curr, size_t size) {
 }
 
 void * allocate_from_freelist(size_t size) {
+  /** critical section **/
+  void * bst_fit = search_list(size);
+
+  if (bst_fit == NULL) {
+    return NULL;
+  }
+  else {
+    /** Write Critical section **/
+    split_extra_space(bst_fit, size);
+    return allocateFromFreeSpace(bst_fit);
+    /** End of Write Critical Section **/
+  }
+  /** End of critical Section **/
 }
 
+void * expandHeap(size_t size) {
+  void * allocated_mem = sbrk(sizeof(mem_block_list) +
+                              size);  //Critical section since sbrk is not thread safe
+
+  mem_block_list * metadata = createNewMetaDataNode(allocated_mem, size);
+  return (void *)allocated_mem + sizeof(mem_block_list);
+}
+
+//Thread Safe malloc/free: locking version
 void * ts_malloc_lock(size_t size) {
-  mem_block_list * curr = free_head;
-  mem_block_list * bst_fit = NULL;
-  size_t bst_fit_size = UINT_MAX;
+  pthread_mutex_lock(&free_list_lock);
+  void * allocated_space = NULL;
+  void * bst_fit_from_list = allocate_from_freelist(size);
 
-  while (curr != NULL) {
-    if (size <= curr->len) {
-      size_t extra_space = curr->len - size;
-      if (extra_space < bst_fit_size) {
-        bst_fit = curr;
-        bst_fit_size = extra_space;
-        if (extra_space == 0) {  //Found the Best fit in the list no need to go further
-          break;
-        }
-      }
-    }
+  if (bst_fit_from_list != NULL) {
+    allocated_space = bst_fit_from_list;
+  }
+  else {
+    allocated_space = expandHeap(size);
+  }
+  pthread_mutex_unlock(&free_list_lock);
+  return allocated_space;
+}
 
+void addMetadataToList(mem_block_list ** head, mem_block_list ** metadata) {
+  if (*head == NULL) {  // Adding first element in the list
+    *head = *metadata;
+    return;
+  }
+
+  if (*head > *metadata) {  // Adding to the front (i.e. Head)
+    (*metadata)->next = *head;
+    (*head)->prev = *metadata;
+    *head = *metadata;
+    return;
+  }
+
+  mem_block_list * curr = *head;
+  while (curr->next != NULL && curr->next < *metadata) {
     curr = curr->next;
   }
 
-  if (bst_fit != NULL) {
-    split_extra_space(bst_fit, size);
-    return allocateFromFreeSpace(bst_fit);
+  (*metadata)->next = curr->next;
+  (*metadata)->prev = curr;
+  if (curr->next != NULL) {  // To check if it is not the end of list.
+    curr->next->prev = *metadata;
   }
-  else {
-    return expandHeap(size);
-  }
+  curr->next = *metadata;
 }
 
 void coalesce(mem_block_list * curr) {
@@ -133,7 +158,8 @@ void coalesce(mem_block_list * curr) {
   }
 }
 
-void mem_free(void * ptr) {
+void ts_free_lock(void * ptr) {
+  pthread_mutex_lock(&free_list_lock);
   mem_block_list * metadata = (mem_block_list *)(ptr - sizeof(mem_block_list));
   addMetadataToList(&free_head, &metadata);
 
@@ -144,8 +170,5 @@ void mem_free(void * ptr) {
 
   //Trying to Coalesce next terms
   coalesce(metadata);
-}
-
-void ts_free_lock(void * ptr) {
-  mem_free(ptr);
+  pthread_mutex_unlock(&free_list_lock);
 }

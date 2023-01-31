@@ -1,5 +1,9 @@
 #include "my_malloc.h"
 
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 mem_block_list * createNewMetaDataNode(void * mem, size_t size) {
   mem_block_list * metadata = (mem_block_list *)mem;
   metadata->len = size;
@@ -38,6 +42,7 @@ void * expandHeap(size_t size) {
   void * allocated_mem = sbrk(sizeof(mem_block_list) + size);
   mem_block_list * metadata = createNewMetaDataNode(allocated_mem, size);
 
+  heap_size = heap_size + sizeof(mem_block_list) + size;
   return (void *)allocated_mem + sizeof(mem_block_list);
 }
 
@@ -81,10 +86,23 @@ void split_extra_space(mem_block_list * curr, size_t size) {
   }
 }
 
-void * allocate_from_freelist(size_t size) {
+void * ff_malloc(size_t size) {
+  mem_block_list * curr = free_head;
+
+  while (curr != NULL) {
+    if (size <= curr->len) {
+      split_extra_space(curr, size);
+      return allocateFromFreeSpace(curr);
+    }
+    else {
+      curr = curr->next;
+    }
+  }
+
+  return expandHeap(size);
 }
 
-void * ts_malloc_lock(size_t size) {
+void * bf_malloc(size_t size) {
   mem_block_list * curr = free_head;
   mem_block_list * bst_fit = NULL;
   size_t bst_fit_size = UINT_MAX;
@@ -146,6 +164,27 @@ void mem_free(void * ptr) {
   coalesce(metadata);
 }
 
-void ts_free_lock(void * ptr) {
+void ff_free(void * ptr) {
   mem_free(ptr);
+}
+
+void bf_free(void * ptr) {
+  mem_free(ptr);
+}
+
+unsigned long get_data_segment_size() {
+  return heap_size;
+}
+
+unsigned long get_data_segment_free_space_size() {
+  unsigned long size = 0;
+
+  mem_block_list * curr = free_head;
+
+  while (curr != NULL) {
+    size = size + sizeof(mem_block_list) + curr->len;
+    curr = curr->next;
+  }
+
+  return size;
 }
