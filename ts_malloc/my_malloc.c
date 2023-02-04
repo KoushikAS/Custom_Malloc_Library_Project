@@ -88,9 +88,12 @@ void * allocate_from_freelist(size_t size) {
   /** End of critical Section **/
 }
 
+/**Only locking sbrk opertation since it is not thread safe **/
 void * expandHeap(size_t size) {
+  pthread_mutex_lock(&sbrk_lock);
   void * allocated_mem = sbrk(sizeof(mem_block_list) +
                               size);  //Critical section since sbrk is not thread safe
+  pthread_mutex_unlock(&sbrk_lock);
 
   mem_block_list * metadata = createNewMetaDataNode(allocated_mem, size);
   return (void *)allocated_mem + sizeof(mem_block_list);
@@ -98,9 +101,11 @@ void * expandHeap(size_t size) {
 
 //Thread Safe malloc/free: locking version
 void * ts_malloc_lock(size_t size) {
-  pthread_mutex_lock(&free_list_lock);
   void * allocated_space = NULL;
+
+  pthread_mutex_lock(&free_list_lock);
   void * bst_fit_from_list = allocate_from_freelist(size);
+  pthread_mutex_unlock(&free_list_lock);
 
   if (bst_fit_from_list != NULL) {
     allocated_space = bst_fit_from_list;
@@ -108,7 +113,7 @@ void * ts_malloc_lock(size_t size) {
   else {
     allocated_space = expandHeap(size);
   }
-  pthread_mutex_unlock(&free_list_lock);
+
   return allocated_space;
 }
 
@@ -159,6 +164,36 @@ void coalesce(mem_block_list * curr) {
 }
 
 void ts_free_lock(void * ptr) {
+  pthread_mutex_lock(&free_list_lock);
+  mem_block_list * metadata = (mem_block_list *)(ptr - sizeof(mem_block_list));
+  addMetadataToList(&free_head, &metadata);
+
+  //Trying to Coalesce previous term
+  if (metadata->prev != NULL) {
+    coalesce(metadata->prev);
+  }
+
+  //Trying to Coalesce next terms
+  coalesce(metadata);
+  pthread_mutex_unlock(&free_list_lock);
+}
+
+//Thread Safe malloc/free: non-locking version
+void * ts_malloc_nolock(size_t size) {
+  void * allocated_space = NULL;
+  void * bst_fit_from_list = allocate_from_freelist(size);
+
+  if (bst_fit_from_list != NULL) {
+    allocated_space = bst_fit_from_list;
+  }
+  else {
+    allocated_space = expandHeap(size);
+  }
+
+  return allocated_space;
+}
+
+void ts_free_nolock(void * ptr) {
   pthread_mutex_lock(&free_list_lock);
   mem_block_list * metadata = (mem_block_list *)(ptr - sizeof(mem_block_list));
   addMetadataToList(&free_head, &metadata);

@@ -15,9 +15,14 @@ struct memory_block_list {
 typedef struct memory_block_list mem_block_list;
 
 extern mem_block_list * free_head = NULL;
+extern __thread mem_block_list * free_head_nonlock = NULL;
 extern pthread_mutex_t free_list_lock = PTHREAD_MUTEX_INITIALIZER;
 extern pthread_mutex_t sbrk_lock = PTHREAD_MUTEX_INITIALIZER;
 
 //Thread Safe malloc/free: locking version
 void * ts_malloc_lock(size_t size);
 void ts_free_lock(void * ptr);
+
+//Thread Safe malloc/free: non-locking version
+void * ts_malloc_nolock(size_t size);
+void ts_free_nolock(void * ptr);
