@@ -9,8 +9,8 @@ mem_block_list * createNewMetaDataNode(void * mem, size_t size) {
 }
 
 // Read lock is required
-mem_block_list * search_list(size_t size) {
-  mem_block_list * curr = free_head;
+mem_block_list * search_list(size_t size, mem_block_list ** head) {
+  mem_block_list * curr = *head;
   mem_block_list * bst_fit = NULL;
   size_t bst_fit_size = UINT_MAX;
 
@@ -32,13 +32,13 @@ mem_block_list * search_list(size_t size) {
   return bst_fit;
 }
 
-void * allocateFromFreeSpace(mem_block_list * curr) {
+void * allocateFromFreeSpace(mem_block_list * curr, mem_block_list ** head) {
   mem_block_list * prev_free = curr->prev;
   mem_block_list * next_free = curr->next;
 
   // Make sure the Free list is proper
   if (prev_free == NULL) {  // 1st element
-    free_head = next_free;
+    *head = next_free;
   }
   else {
     prev_free->next = next_free;
@@ -72,9 +72,9 @@ void split_extra_space(mem_block_list * curr, size_t size) {
   }
 }
 
-void * allocate_from_freelist(size_t size) {
+void * allocate_from_freelist(size_t size, mem_block_list ** head) {
   /** critical section **/
-  void * bst_fit = search_list(size);
+  void * bst_fit = search_list(size, head);
 
   if (bst_fit == NULL) {
     return NULL;
@@ -82,7 +82,7 @@ void * allocate_from_freelist(size_t size) {
   else {
     /** Write Critical section **/
     split_extra_space(bst_fit, size);
-    return allocateFromFreeSpace(bst_fit);
+    return allocateFromFreeSpace(bst_fit, head);
     /** End of Write Critical Section **/
   }
   /** End of critical Section **/
@@ -104,7 +104,7 @@ void * ts_malloc_lock(size_t size) {
   void * allocated_space = NULL;
 
   pthread_mutex_lock(&free_list_lock);
-  void * bst_fit_from_list = allocate_from_freelist(size);
+  void * bst_fit_from_list = allocate_from_freelist(size, &free_head);
   pthread_mutex_unlock(&free_list_lock);
 
   if (bst_fit_from_list != NULL) {
@@ -181,7 +181,7 @@ void ts_free_lock(void * ptr) {
 //Thread Safe malloc/free: non-locking version
 void * ts_malloc_nolock(size_t size) {
   void * allocated_space = NULL;
-  void * bst_fit_from_list = allocate_from_freelist(size);
+  void * bst_fit_from_list = allocate_from_freelist(size, &free_head_nonlock);
 
   if (bst_fit_from_list != NULL) {
     allocated_space = bst_fit_from_list;
@@ -194,9 +194,8 @@ void * ts_malloc_nolock(size_t size) {
 }
 
 void ts_free_nolock(void * ptr) {
-  pthread_mutex_lock(&free_list_lock);
   mem_block_list * metadata = (mem_block_list *)(ptr - sizeof(mem_block_list));
-  addMetadataToList(&free_head, &metadata);
+  addMetadataToList(&free_head_nonlock, &metadata);
 
   //Trying to Coalesce previous term
   if (metadata->prev != NULL) {
@@ -205,5 +204,4 @@ void ts_free_nolock(void * ptr) {
 
   //Trying to Coalesce next terms
   coalesce(metadata);
-  pthread_mutex_unlock(&free_list_lock);
 }
