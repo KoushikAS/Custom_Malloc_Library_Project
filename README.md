@@ -2,7 +2,6 @@
 
 ## Overview
 
-Project Overview
 
 This project implementation of custom memory allocation functions in C, mirroring the functionality of the standard malloc and free functions. Developed as part of ECE-650 Systems Program & Engineering, this individual project showcases the understanding and application of memory management techniques in a UNIX-based environment, specifically within the Duke Linux system. The custom malloc library with thread safety, making it suitable for multi-threaded applications. It demonstrates the implementation of thread-safe `malloc` and `free` functions using different synchronization techniques for concurrent access.
 
