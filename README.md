@@ -2,8 +2,6 @@
 
 ## Overview
 
-Project Overview
-
 This project implementation of custom memory allocation functions in C, mirroring the functionality of the standard malloc and free functions. Developed as part of ECE-650 Systems Program & Engineering, this individual project showcases the understanding and application of memory management techniques in a UNIX-based environment, specifically within the Duke Linux system. 
 
 For thread safe implementation check  **`checkpoint-2`:** branch
