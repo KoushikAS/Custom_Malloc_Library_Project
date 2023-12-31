@@ -1,92 +1,79 @@
-# ECE-650-project1
+# Thread-Safe Malloc Library Project
 
+## Overview
 
+Project Overview
 
-## Getting started
+This project implementation of custom memory allocation functions in C, mirroring the functionality of the standard malloc and free functions. Developed as part of ECE-650 Systems Program & Engineering, this individual project showcases the understanding and application of memory management techniques in a UNIX-based environment, specifically within the Duke Linux system. The custom malloc library with thread safety, making it suitable for multi-threaded applications. It demonstrates the implementation of thread-safe `malloc` and `free` functions using different synchronization techniques for concurrent access.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Features
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### Custom Memory Allocation:
+- **`malloc()`:** Custom function for dynamic memory allocation.
+- **`free()`:** Custom function to free allocated memory.
 
-## Add your files
+### Memory Allocation Strategies:
+- **First Fit:** Allocates the first sufficiently large block found.
+- **Best Fit:** Chooses the smallest block that fits the request, reducing waste.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### Memory Management Techniques:
+- **Coalescing:** Adjacent free memory blocks are merged to prevent fragmentation.
+- **Splitting:** Larger free blocks are split to match the allocation request precisely.
 
-```
-cd existing_repo
-git remote add origin https://gitlab.oit.duke.edu/ka266/ece-650-project1.git
-git branch -M main
-git push -uf origin main
-```
+### Performance Optimization:
+- Minimized data segment size by allocating memory only as needed.
+- Efficient free block tracking and retrieval.
 
-## Integrate with your tools
+### Utility Functions:
+- **`get_data_segment_size()`:** Retrieves the size of the data segment.
+- **`get_data_segment_free_space_size()`:** Calculates the free space within the data segment.
 
-- [ ] [Set up project integrations](https://gitlab.oit.duke.edu/ka266/ece-650-project1/-/settings/integrations)
+### Thread-Safe Memory Allocation Functions**:
+- Locking version: `ts_malloc_lock`, `ts_free_lock`.
+- Non-locking version: `ts_malloc_nolock`, `ts_free_nolock`.
+  
+- **Best Fit Allocation Policy** for both versions.
 
-## Collaborate with your team
+### **Concurrency and Synchronization**:
+- Lock-based synchronization in the locking version.
+- Minimal locking (only around `sbrk`) in the non-locking version.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## Development Environment
 
-## Test and Deploy
+- **Platform**: UNIX-based, specifically the Duke Linux environment.
+- **Languages & Tools**: C, pthreads, `gdb`, `valgrind`.
 
-Use the built-in continuous integration in GitLab.
+## Technical Challenges
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- Implementing thread safety in malloc and free operations.
+- Applying synchronization mechanisms to manage memory operations.
+- Identifying and handling potential race conditions.
 
-***
+## Building and Running
 
-# Editing this README
+- **Compilation**: Use `Makefile` to build into a shared library `libmymalloc.so`.
+- **Usage**: Link with `-lmymalloc` and include `my_malloc.h`.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Performance Comparison
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- Conduct experiments using `thread_test_measurement.c`.
+- Assess execution time and allocation efficiency.
+- Compare locking and non-locking versions for performance and concurrency trade-offs.
 
-## Name
-Choose a self-explaining name for your project.
+## Submission Contents
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+- **Report (`report.pdf`)**: Description of thread-safe implementations, synchronization strategies, and performance analysis.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Contributions
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+This project was completed as part of an academic assignment with requirments provided requirments.pdf. Contributions were made solely by Koushik Annareddy Sreenath, adhering to the project guidelines and requirements set by the course ECE-650 Systems Program & Engineering
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+This project is an academic assignment and is subject to university guidelines on academic integrity and software use.
+
+## Acknowledgments
+
+- Thanks to Rabih Younes and the course staff for providing guidance and support throughout the project.
+
+
