@@ -4,7 +4,9 @@
 
 Project Overview
 
-This project implementation of custom memory allocation functions in C, mirroring the functionality of the standard malloc and free functions. Developed as part of ECE-650 Systems Program & Engineering, this individual project showcases the understanding and application of memory management techniques in a UNIX-based environment, specifically within the Duke Linux system. The custom malloc library with thread safety, making it suitable for multi-threaded applications. It demonstrates the implementation of thread-safe `malloc` and `free` functions using different synchronization techniques for concurrent access.
+This project implementation of custom memory allocation functions in C, mirroring the functionality of the standard malloc and free functions. Developed as part of ECE-650 Systems Program & Engineering, this individual project showcases the understanding and application of memory management techniques in a UNIX-based environment, specifically within the Duke Linux system. 
+
+For thread safe implementation check  **`checkpoint-2`:** branch
 
 ## Features
 
@@ -27,16 +29,6 @@ This project implementation of custom memory allocation functions in C, mirrorin
 ### Utility Functions:
 - **`get_data_segment_size()`:** Retrieves the size of the data segment.
 - **`get_data_segment_free_space_size()`:** Calculates the free space within the data segment.
-
-### Thread-Safe Memory Allocation Functions**:
-- Locking version: `ts_malloc_lock`, `ts_free_lock`.
-- Non-locking version: `ts_malloc_nolock`, `ts_free_nolock`.
-  
-- **Best Fit Allocation Policy** for both versions.
-
-### **Concurrency and Synchronization**:
-- Lock-based synchronization in the locking version.
-- Minimal locking (only around `sbrk`) in the non-locking version.
 
 ## Development Environment
 
