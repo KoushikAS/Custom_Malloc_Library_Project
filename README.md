@@ -1,4 +1,4 @@
-# Thread-Safe Malloc Library Project
+# Custom Malloc Library Project
 
 ## Overview
 
